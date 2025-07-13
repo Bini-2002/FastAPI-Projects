@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+env/
+fastapienv/
+
+# VS Code
+.vscode/
+
+# PyCharm/IDEA
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
