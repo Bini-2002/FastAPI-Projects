@@ -1,7 +1,16 @@
 from fastapi import FastAPI
-from app.database import engine, Base
+from app.database import engine, Base, SessionLocal
 import app.models
 
 app = FastAPI()
 
 Base.metadata.create_all(bind=engine)
+
+def get_db():
+  db = SessionLocal()
+  try:
+    yield db
+  finally:
+    db.close()
+
+    
