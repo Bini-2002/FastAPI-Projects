@@ -48,17 +48,30 @@ async def create_todo(todo_request: TodoRequest, db: db_dependancy):
     db.refresh(todo_model) # Refresh the instance to get the updated state from the database
     return todo_model
 
-@app.put("/todo/{todo_id}", status_code=status.HTTP_200_OK)
+@app.put("/todo/{todo_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def update_todo(
-    todo_id: int, 
+    db: db_dependancy,
     todo_request: TodoRequest, 
-    db: db_dependancy):
-    
+    todo_id: int = Path(gt=0) 
+    ):
+
     todo_model = db.query(Todos).filter(Todos.id == todo_id).first()
     if todo_model is None:
         raise HTTPException(status_code=404, detail="Todo not found")
     
-    for key, value in todo_request.dict().items():
-        setattr(todo_model, key, value)
+    todo_model.title = todo_request.title
+    todo_model.description = todo_request.description
+    todo_model.priority = todo_request.priority
+    todo_model.completed = todo_request.completed
     
+    db.add(todo_model)  # Add the updated todo to the session
+    db.commit()  # Commit the session to save the updated todo
+
+@app.delete("/todo/{todo_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_todo(db: db_dependancy, todo_id: int = Path(gt=0)):
+    todo_model = db.query(Todos).filter(Todos.id == todo_id).first()
+    if todo_model is None:
+        raise HTTPException(status_code=404, detail="Todo not found")
+    
+    db.query(Todos).filter(Todos.id == todo_id).delete()
     db.commit()
