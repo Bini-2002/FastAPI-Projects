@@ -45,6 +45,5 @@ async def create_user(db: db_dependancy,
     )
     db.add(create_user_model)
     db.commit()
-    db.refresh(create_user_model)  # Refresh the instance to get the updated state from the database
 
 
