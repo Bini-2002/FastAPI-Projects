@@ -3,6 +3,8 @@ from typing import Annotated
 from sqlalchemy.orm import Session
 from app.database import engine, Base, SessionLocal
 from app.models import Todos
+from fastapi import HTTPException , status , Path
+from pydantic import BaseModel, Field
 
 app = FastAPI()
 
@@ -16,9 +18,47 @@ def get_db():
     db.close()
 
 
-@app.get("/")
-async def read_all(db: Annotated[Session, Depends(get_db)]):
+db_dependancy = Annotated[Session, Depends(get_db)]
+
+class TodoRequest(BaseModel):
+    title: str = Field(min_length=3)
+    description: str = Field(min_length=3, max_length=100)
+    priority: int = Field(gt=0, le=5)
+    completed: bool
+     
+
+@app.get("/" ,  status_code=status.HTTP_200_OK)
+async def read_all(db: db_dependancy):
     todos = db.query(Todos).all()
     return todos
 
+@app.get("/todo/{todo_id}" , status_code=status.HTTP_200_OK)
+async def read_todo(db: db_dependancy, todo_id: int = Path(gt = 0) ):
+    todo_model = db.query(Todos).filter(Todos.id == todo_id).first()
+    if todo_model is not None:
+        return todo_model
+    raise HTTPException(status_code=404, detail="Todo not found")
 
+
+@app.post("/todo", status_code=status.HTTP_201_CREATED)
+async def create_todo(todo_request: TodoRequest, db: db_dependancy):
+    todo_model = Todos(**todo_request.dict())
+    db.add(todo_model) # Add the new todo to the session
+    db.commit() # Commit the session to save the new todo
+    db.refresh(todo_model) # Refresh the instance to get the updated state from the database
+    return todo_model
+
+@app.put("/todo/{todo_id}", status_code=status.HTTP_200_OK)
+async def update_todo(
+    todo_id: int, 
+    todo_request: TodoRequest, 
+    db: db_dependancy):
+    
+    todo_model = db.query(Todos).filter(Todos.id == todo_id).first()
+    if todo_model is None:
+        raise HTTPException(status_code=404, detail="Todo not found")
+    
+    for key, value in todo_request.dict().items():
+        setattr(todo_model, key, value)
+    
+    db.commit()
