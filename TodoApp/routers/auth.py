@@ -1,9 +1,12 @@
 from venv import create
-import bcrypt
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends , status
 from pydantic import BaseModel
 from app.models import Users
 from passlib.context import CryptContext
+from app.database import SessionLocal
+from typing import Annotated
+from sqlalchemy.orm import Session
+
 
 router = APIRouter()
 
@@ -17,9 +20,21 @@ class CreateUserRequest(BaseModel):
     password: str
     role: str
 
-@router.post("/auth/")
-async def create_user(create_user_request : CreateUserRequest):
-  create_user_model = Users(
+def get_db():
+  db = SessionLocal()
+  try:
+    yield db
+  finally:
+    db.close()
+
+
+db_dependancy = Annotated[Session, Depends(get_db)]
+
+
+@router.post("/auth/", status_code=status.HTTP_201_CREATED)
+async def create_user(db: db_dependancy, 
+                      create_user_request: CreateUserRequest):
+    create_user_model = Users(
         username=create_user_request.username,
         email=create_user_request.email,
         first_name=create_user_request.first_name,
@@ -28,9 +43,8 @@ async def create_user(create_user_request : CreateUserRequest):
         role=create_user_request.role,
         is_active=True
     )
-    # Here you would typically add the user to the database
-    # For example: db.add(create_user_model)
-    # db.commit()
-  return create_user_model
+    db.add(create_user_model)
+    db.commit()
+    db.refresh(create_user_model)  # Refresh the instance to get the updated state from the database
 
 
