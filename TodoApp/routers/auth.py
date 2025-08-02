@@ -6,6 +6,7 @@ from passlib.context import CryptContext
 from app.database import SessionLocal
 from typing import Annotated
 from sqlalchemy.orm import Session
+from fastapi.security import OAuth2PasswordRequestForm
 
 
 router = APIRouter()
@@ -46,4 +47,8 @@ async def create_user(db: db_dependancy,
     db.add(create_user_model)
     db.commit()
 
+
+@router.post("/token")
+async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm , Depends()]):
+   return 'token'
 
