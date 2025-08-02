@@ -31,6 +31,14 @@ def get_db():
 
 db_dependancy = Annotated[Session, Depends(get_db)]
 
+def authenticate_user(db: Session, username: str, password: str):
+    user = db.query(Users).filter(Users.username == username).first()
+    if not user:
+        return False
+    if not bcrypt_context.verify(password, user.hashed_password):
+        return False
+    return True
+
 
 @router.post("/auth/", status_code=status.HTTP_201_CREATED)
 async def create_user(db: db_dependancy, 
@@ -49,6 +57,9 @@ async def create_user(db: db_dependancy,
 
 
 @router.post("/token")
-async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm , Depends()]):
-   return 'token'
+async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm , Depends()] , db: db_dependancy):
+   user = authenticate_user(db, form_data.username, form_data.password)
+   if not user:
+      return "Failed Authentication"
+   return "Successful Authentication"
 
