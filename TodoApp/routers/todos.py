@@ -1,10 +1,12 @@
-from fastapi import APIRouter , Depends
+from fastapi import APIRouter , Depends , HTTPException
 from typing import Annotated
+from httpx import get
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.models import Todos
 from fastapi import HTTPException , status , Path
 from pydantic import BaseModel, Field
+from .auth import get_current_user
 
 router = APIRouter()
 
@@ -18,6 +20,7 @@ def get_db():
 
 
 db_dependancy = Annotated[Session, Depends(get_db)]
+user_dependancy = Annotated[dict , Depends(get_current_user)]
 
 class TodoRequest(BaseModel):
     title: str = Field(min_length=3)
@@ -42,12 +45,16 @@ async def read_todo(db: db_dependancy, todo_id: int = Path(gt = 0) ):
 
 
 @router.post("/todo", status_code=status.HTTP_201_CREATED)
-async def create_todo(todo_request: TodoRequest, db: db_dependancy):
-    todo_model = Todos(**todo_request.dict())
+async def create_todo(user : user_dependancy, 
+                      db: db_dependancy ,
+                      todo_request: TodoRequest):
+    
+    if user is None:
+        raise HTTPException(status_code = 401 , details = 'Authentication Failed')
+    todo_model = Todos(**todo_request.dict() , owner_id = user.get('id'))
+    
     db.add(todo_model) # Add the new todo to the session
     db.commit() # Commit the session to save the new todo
-    db.refresh(todo_model) # Refresh the instance to get the updated state from the database
-    return todo_model
 
 
 @router.put("/todo/{todo_id}", status_code=status.HTTP_204_NO_CONTENT)

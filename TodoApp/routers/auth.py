@@ -69,7 +69,7 @@ async def get_current_user(token : Annotated[str, Depends(outh2_bearer)]):
       if username is None or user_id is None:
          raise HTTPException(status_code= status.HTTP_401_UNAUTHORIZED,
                              detail = 'Could not validate user.')
-      raise {'username': username , 'id': user_id} 
+      return {'username': username , 'id': user_id} 
     except JWTError:
         raise HTTPException(status_code= status.HTTP_401_UNAUTHORIZED,
                              detail = 'Could not validate user.')
