@@ -1,0 +1,2 @@
+# Only standard library used; requirements optional.
+# If you later add features (e.g., cryptography, logging frameworks), list them here.
