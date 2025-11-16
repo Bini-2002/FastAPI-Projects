@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 
-app = FastAPI()
+hi = FastAPI()
 
-@app.get("/")
+@hi.get("/")
 def read_root():
-    return {"Hello": "World"}
+    return {"Hello": "World"} #JSON response with a greeting
+
