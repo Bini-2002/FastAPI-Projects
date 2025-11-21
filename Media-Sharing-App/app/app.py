@@ -1,8 +1,14 @@
-from fastapi import FastAPI
+from fastapi import FastAPI , HTTPException
 
-hi = FastAPI()
+app = FastAPI()
 
-@hi.get("/")
-def read_root():
-    return {"Hello": "World"} #JSON response with a greeting
+text_posts = {
+  1: {"title": "Hello World!", "content": "new post"},}
 
+@app.get("/posts")
+def get_posts():
+    return text_posts
+
+@app.get("/posts/{id}") #path parameter
+def get_post(id: int):
+    return text_posts.get(id)
