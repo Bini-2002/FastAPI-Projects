@@ -13,11 +13,12 @@ text_posts = {
     8 :{"title": "Development Note", "content": "feature X added"},
     9 :{"title": "Announcement", "content": "coming soon"},
     10 :{"title": "Final Test", "content": "all systems go"},
-    11 :{"title": "System Reboot", "content": "maintenance check"},
-    12 :{"title": "User Feedback", "content": "improvements suggested"}  
 }
+
 @app.get("/posts")
-def get_posts():
+def get_all_posts(limit: int = None):
+    if limit:
+        return dict(list(text_posts.items())[:limit])
     return text_posts
 
 @app.get("/posts/{id}") #path parameter
@@ -25,3 +26,4 @@ def get_post(id: int):
     if id not in text_posts:
         raise HTTPException(status_code=404, detail="Post not found")
     return text_posts.get(id)
+
